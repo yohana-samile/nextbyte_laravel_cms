@@ -31,7 +31,6 @@ class GenerateCrud extends Command
             0 // Default to backend
         );
 
-        /*
         $this->handleFrontendOrBackend($type, $modelClass);
 
        // Generate Model
@@ -67,7 +66,6 @@ class GenerateCrud extends Command
 
         // Add breadcrumbs
         $this->Breadcrumb($modelClass, $type);
-*/
 
         $this->Breadcrumb($type, $modelClass);
       $this->info('CRUD generation completed!');
@@ -96,16 +94,40 @@ class GenerateCrud extends Command
 
     private function Breadcrumb($type, $modelClass)
     {
+        $modelSnake = Str::snake($modelClass);
         // Convert the model class name to PascalCase for naming files
         $modelPascal = Str::studly($modelClass);
-
         // Define the base path for breadcrumbs
         $breadcrumbsBasePath = base_path('routes/Breadcrumbs');
 
+        // Set the breadcrumb structure
+        $breadcrumbStructure = "<?php\n\nBreadcrumbs::for('backend.$modelSnake.index', function (\$breadcrumbs) {\n";
+        $breadcrumbStructure .= "    \$breadcrumbs->parent('backend.dashboard');\n";
+        $breadcrumbStructure .= "    \$breadcrumbs->push(__('label.$modelSnake'), route('backend.$modelSnake.index'));\n";
+        $breadcrumbStructure .= "});\n\n";
+
+        $breadcrumbStructure .= "/*Create*/\n";
+        $breadcrumbStructure .= "Breadcrumbs::for('backend.$modelSnake.create', function (\$breadcrumbs) {\n";
+        $breadcrumbStructure .= "    \$breadcrumbs->parent('backend.$modelSnake.index');\n";
+        $breadcrumbStructure .= "    \$breadcrumbs->push(__('label.crud.create'), route('backend.$modelSnake.create'));\n";
+        $breadcrumbStructure .= "});\n\n";
+
+        $breadcrumbStructure .= "/*Edit*/\n";
+        $breadcrumbStructure .= "Breadcrumbs::for('backend.$modelSnake.edit', function (\$breadcrumbs, \$$modelClass) {\n";
+        $breadcrumbStructure .= "    \$breadcrumbs->parent('backend.$modelSnake.index');\n";
+        $breadcrumbStructure .= "    \$breadcrumbs->push(__('label.crud.edit'), route('backend.$modelSnake.edit', \$$modelClass));\n";
+        $breadcrumbStructure .= "});\n\n";
+
+        $breadcrumbStructure .= "/*Profile*/\n";
+        $breadcrumbStructure .= "Breadcrumbs::for('backend.$modelSnake.profile', function (\$breadcrumbs, \$$modelClass) {\n";
+        $breadcrumbStructure .= "    \$breadcrumbs->parent('backend.$modelSnake.index');\n";
+        $breadcrumbStructure .= "    \$breadcrumbs->push(__('label.crud.profile'), route('backend.$modelSnake.profile', \$$modelClass));\n";
+        $breadcrumbStructure .= "});\n";
+
         if ($type == 'frontend') {
             // Define the path to the frontend breadcrumbs directory
+           // $breadcrumbsPath = $breadcrumbsBasePath . "/Frontend/" . Str::snake($modelClass);
             $breadcrumbsPath = $breadcrumbsBasePath . "/Frontend/";
-
             // Create the directory if it doesn't exist
             if (!File::exists($breadcrumbsPath)) {
                 File::makeDirectory($breadcrumbsPath, 0777, true, true);
@@ -115,8 +137,8 @@ class GenerateCrud extends Command
             // Create a breadcrumb file with the model name (e.g., Post.php)
             $breadcrumbFile = $breadcrumbsPath . '/' . $modelPascal . '.php';
             if (!File::exists($breadcrumbFile)) {
-                File::put($breadcrumbFile, "<?php\n\n// Breadcrumbs for $modelClass\n");
-                $this->info("Breadcrumb file created: $breadcrumbFile");
+                File::put($breadcrumbFile, $breadcrumbStructure);
+                $this->info("Frontend breadcrumb file created: $breadcrumbFile");
             }
 
         } elseif ($type == 'backend') {
@@ -132,15 +154,14 @@ class GenerateCrud extends Command
             // Create a breadcrumb file with the model name (e.g., Post.php)
             $breadcrumbFile = $breadcrumbsPath . '/' . $modelPascal . '.php';
             if (!File::exists($breadcrumbFile)) {
-                File::put($breadcrumbFile, "<?php\n\n// Breadcrumbs for $modelClass\n");
-                $this->info("Breadcrumb file created: $breadcrumbFile");
+                File::put($breadcrumbFile, $breadcrumbStructure);
+                $this->info("Backend breadcrumb file created: $breadcrumbFile");
             }
 
         } else {
             $this->error("Invalid type specified. Please use 'backend' or 'frontend'.");
         }
     }
-
 
 
     private function handleFrontendOrBackend($type, $modelClass)
