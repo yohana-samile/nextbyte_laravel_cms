@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Helpers\ModelHelper;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
@@ -33,9 +33,8 @@ class GenerateCrud extends Command
 
         $this->handleFrontendOrBackend($type, $modelClass);
 
-       // Generate Model
-       Artisan::call('make:model', ['name' => $modelClass]);
-       $this->info("Model created: app/Models/{$modelClass}.php");
+        // Generate Model
+        ModelHelper::generateModel($modelClass, $modelPlural);
 
        // Generate Migration
        Artisan::call('make:migration', ['name' => "create_{$modelPlural}_table"]);
