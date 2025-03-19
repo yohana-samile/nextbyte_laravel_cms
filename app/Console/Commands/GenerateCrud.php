@@ -26,11 +26,12 @@ class GenerateCrud extends Command
 
         // Ask the user to choose between backend or frontend
         $type = $this->choice(
-            'Please select the type of CRUD (backend/frontend) default backend',
+            'Please select the type of CRUD (backend/frontend) default',
             ['backend', 'frontend'],
             0 // Default to backend
         );
 
+        /*
         $this->handleFrontendOrBackend($type, $modelClass);
 
        // Generate Model
@@ -64,7 +65,12 @@ class GenerateCrud extends Command
        // Add Route
       $this->addRoute($modelClass, $type);
 
-        $this->info('CRUD generation completed!');
+        // Add breadcrumbs
+        $this->Breadcrumb($modelClass, $type);
+*/
+
+        $this->Breadcrumb($type, $modelClass);
+      $this->info('CRUD generation completed!');
     }
 
     private function addRoute($modelClass, $type)
@@ -86,6 +92,55 @@ class GenerateCrud extends Command
             $this->error("Operation Fail, Route already exists in routes/web.php");
         }
     }
+
+
+    private function Breadcrumb($type, $modelClass)
+    {
+        // Convert the model class name to PascalCase for naming files
+        $modelPascal = Str::studly($modelClass);
+
+        // Define the base path for breadcrumbs
+        $breadcrumbsBasePath = base_path('routes/Breadcrumbs');
+
+        if ($type == 'frontend') {
+            // Define the path to the frontend breadcrumbs directory
+            $breadcrumbsPath = $breadcrumbsBasePath . "/Frontend/";
+
+            // Create the directory if it doesn't exist
+            if (!File::exists($breadcrumbsPath)) {
+                File::makeDirectory($breadcrumbsPath, 0777, true, true);
+                $this->info("Frontend Breadcrumbs directory created: $breadcrumbsPath");
+            }
+
+            // Create a breadcrumb file with the model name (e.g., Post.php)
+            $breadcrumbFile = $breadcrumbsPath . '/' . $modelPascal . '.php';
+            if (!File::exists($breadcrumbFile)) {
+                File::put($breadcrumbFile, "<?php\n\n// Breadcrumbs for $modelClass\n");
+                $this->info("Breadcrumb file created: $breadcrumbFile");
+            }
+
+        } elseif ($type == 'backend') {
+            // Define the path to the backend breadcrumbs directory
+            $breadcrumbsPath = $breadcrumbsBasePath . "/Backend/";
+
+            // Create the directory if it doesn't exist
+            if (!File::exists($breadcrumbsPath)) {
+                File::makeDirectory($breadcrumbsPath, 0777, true, true);
+                $this->info("Backend Breadcrumbs directory created: $breadcrumbsPath");
+            }
+
+            // Create a breadcrumb file with the model name (e.g., Post.php)
+            $breadcrumbFile = $breadcrumbsPath . '/' . $modelPascal . '.php';
+            if (!File::exists($breadcrumbFile)) {
+                File::put($breadcrumbFile, "<?php\n\n// Breadcrumbs for $modelClass\n");
+                $this->info("Breadcrumb file created: $breadcrumbFile");
+            }
+
+        } else {
+            $this->error("Invalid type specified. Please use 'backend' or 'frontend'.");
+        }
+    }
+
 
 
     private function handleFrontendOrBackend($type, $modelClass)
